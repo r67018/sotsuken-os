@@ -6,11 +6,6 @@ use core::panic::PanicInfo;
 
 #[no_mangle]
 pub extern "C" fn KernelMain () -> ! {
-    let mut a = 1;
-    let mut b = &mut a;
-    let mut c = &mut b;
-    b = 2;
-
     loop {
         unsafe { asm!("hlt") }
     }

@@ -183,11 +183,6 @@ EFI_STATUS EFIAPI UefiMain(
         gop->Mode->FrameBufferBase + gop->Mode->FrameBufferSize,
         gop->Mode->FrameBufferSize);
 
-    UINT8* frame_buffer = (UINT8*)gop->Mode->FrameBufferBase;
-    for (UINTN i = 0; i < gop->Mode->FrameBufferSize; ++i) {
-        frame_buffer[i] = 255;
-    }
-
     // カーネルのファイルを読み込む
     EFI_FILE_PROTOCOL* kernel_file;
     root_dir->Open(
@@ -230,9 +225,9 @@ EFI_STATUS EFIAPI UefiMain(
     // EFIのエントリーポイントは先頭から24バイトの位置に8バイトの整数として格納されている
     UINT64 entry_addr = *(UINT64*)(kernel_base_addr + 24);
 
-    typedef void EntryPointType(void);
+    typedef void EntryPointType(UINT64, UINT64);
     EntryPointType* entry_point = (EntryPointType*)entry_addr;
-    entry_point();
+    entry_point(gop->Mode->FrameBufferBase, gop->Mode->FrameBufferSize);
 
     Print(L"All done!\n");
     

@@ -150,6 +150,10 @@ const CHAR16* GetPixelFormatUnicode(EFI_GRAPHICS_PIXEL_FORMAT fmt) {
   }
 }
 
+void Halt(void) {
+    while(1) __asm__("hlt");
+}
+
 
 EFI_STATUS EFIAPI UefiMain(
     EFI_HANDLE image_handle,
@@ -198,15 +202,19 @@ EFI_STATUS EFIAPI UefiMain(
     EFI_FILE_INFO* file_info = (EFI_FILE_INFO*)file_info_buffer;
     UINTN kernel_file_size = file_info->FileSize;
 
+    EFI_STATUS status;
     EFI_PHYSICAL_ADDRESS kernel_base_addr = 0x100000;
-    gBS->AllocatePages(
+    status = gBS->AllocatePages(
         AllocateAddress, EfiLoaderData,
         (kernel_file_size + 0xfff) / 0x1000, &kernel_base_addr);
+    if (EFI_ERROR(status)) {
+        Print(L"Failed to allocate pages: %r", status);
+        Halt();
+    }
     kernel_file->Read(kernel_file, &kernel_file_size, (VOID*)kernel_base_addr);
     Print(L"Kernel: 0x%0lx (%lu bytes)\n", kernel_base_addr, kernel_file_size);
 
     // ブートサービスを停止する
-    EFI_STATUS status;
     status = gBS->ExitBootServices(image_handle, memmap.map_key);
     if (EFI_ERROR(status)) {
         status = GetMemoryMap(&memmap);

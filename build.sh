@@ -13,6 +13,6 @@ if [ $CARGO_STATUS -ne 0 ]; then
 fi
 
 # ブートローダーをビルド
-cd $EDK2_DIR
+cd $EDK2_DIR || exit 1
 source edksetup.sh
 build

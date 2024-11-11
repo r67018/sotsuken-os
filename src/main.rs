@@ -1,11 +1,9 @@
 #![no_std]
 #![no_main]
 
-mod frame_buffer_config;
-
 use core::arch::asm;
 use core::panic::PanicInfo;
-use crate::frame_buffer_config::{FrameBufferConfig, PixelFormat_kPixelBGRResv8BitPerColor, PixelFormat_kPixelRGBResv8BitPerColor};
+use kernel::{FrameBufferConfig, PixelFormat_kPixelBGRResv8BitPerColor, PixelFormat_kPixelRGBResv8BitPerColor};
 
 #[no_mangle]
 pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {

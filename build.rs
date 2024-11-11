@@ -5,7 +5,7 @@ fn main() {
     println!("cargo:rustc-link-search=/usr/include/x86_64-linux-gnu/");
 
     let bindings = bindgen::Builder::default()
-        .header("../MikanLoaderPkg/frame_buffer_config.hpp")
+        .header("MikanLoaderPkg/frame_buffer_config.hpp")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .use_core()
         .generate()

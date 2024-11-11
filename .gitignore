@@ -1,3 +1,6 @@
 mnt/
 disk.img
 compile-error.txt
+
+target
+kernel.elf

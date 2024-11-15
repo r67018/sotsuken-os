@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![allow(non_upper_case_globals)]
 
 use core::arch::asm;
 use core::panic::PanicInfo;
@@ -7,9 +8,23 @@ use kernel::{FrameBufferConfig, PixelFormat_kPixelBGRResv8BitPerColor, PixelForm
 
 #[no_mangle]
 pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {
+    // PixelFormatによってPixelWriterを切り替える
+    // 配置newのやり方がわからないので、両方インスタンス化してそれを参照する
+    let mut rgb_pixel_writer = RGBResv8BitPerColorPixelWriter {
+        config: frame_buffer_config,
+    };
+    let mut bgr_pixel_writer = BGRResv8BitPerColorPixelWriter {
+        config: frame_buffer_config,
+    };
+    let pixel_writer: &mut dyn PixelWriter = match frame_buffer_config.pixel_format {
+        PixelFormat_kPixelRGBResv8BitPerColor => &mut rgb_pixel_writer,
+        PixelFormat_kPixelBGRResv8BitPerColor => &mut bgr_pixel_writer,
+        _ => panic!("unsupported pixel format: {}", frame_buffer_config.pixel_format),
+    };
+
     for x in 0..frame_buffer_config.horizontal_resolution {
         for y in 0..frame_buffer_config.vertical_resolution {
-            write_pixel(frame_buffer_config, x, y, &PixelColor {
+            pixel_writer.write(x, y, &PixelColor {
                 r: 255,
                 g: 255,
                 b: 255,
@@ -18,7 +33,7 @@ pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {
     }
     for x in 0..200 {
         for y in 0..100 {
-            write_pixel(frame_buffer_config, 100 + x, 100 + y, &PixelColor {
+            pixel_writer    .write(x, y, &PixelColor {
                 r: 0,
                 g: 255,
                 b: 0,
@@ -43,25 +58,42 @@ struct PixelColor {
     b: u8,
 }
 
-fn write_pixel(config: &mut FrameBufferConfig, x: u32, y: u32, c: &PixelColor) -> bool {
-    let pixel_position = config.pixels_per_scan_line * y + x;
-    if config.pixel_format == PixelFormat_kPixelRGBResv8BitPerColor {
+fn pixel_at(x: u32, y: u32, config: &FrameBufferConfig) -> *mut u8 {
+    unsafe {
+        config.frame_buffer.offset(4 * (config.pixels_per_scan_line * y + x) as isize)
+    }
+}
+
+trait PixelWriter {
+    fn write(&self, x: u32, y: u32, c: &PixelColor);
+}
+
+struct RGBResv8BitPerColorPixelWriter<'a> {
+    pub config: &'a FrameBufferConfig,
+}
+
+impl PixelWriter for RGBResv8BitPerColorPixelWriter<'_> {
+    fn write(&self, x: u32, y: u32, c: &PixelColor) {
+        let p = pixel_at(x, y, self.config);
         unsafe {
-            let p = config.frame_buffer.offset(4 * pixel_position as isize);
             *p.offset(0) = c.r;
             *p.offset(1) = c.g;
             *p.offset(2) = c.b;
         }
-    } else if config.pixel_format == PixelFormat_kPixelBGRResv8BitPerColor {
+    }
+}
+
+struct BGRResv8BitPerColorPixelWriter<'a> {
+    pub config: &'a FrameBufferConfig,
+}
+
+impl PixelWriter for BGRResv8BitPerColorPixelWriter<'_> {
+    fn write(&self, x: u32, y: u32, c: &PixelColor) {
+        let p = pixel_at(x, y, self.config);
         unsafe {
-            let p = config.frame_buffer.offset(4 * pixel_position as isize);
             *p.offset(0) = c.b;
             *p.offset(1) = c.g;
             *p.offset(2) = c.r;
         }
-    } else {
-        return false;
     }
-    true
 }
-

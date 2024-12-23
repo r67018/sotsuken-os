@@ -4,3 +4,5 @@ compile-error.txt
 
 target
 kernel.elf
+hankaku.bin
+hankaku.o

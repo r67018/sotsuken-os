@@ -46,16 +46,23 @@ pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {
         }
     }
 
-    write_ascii(pixel_writer, 50, 50, 'A', &PixelColor {
-        r: 0,
-        g: 0,
-        b: 0,
-    });
-    write_ascii(pixel_writer, 58, 50, 'A', &PixelColor {
-        r: 0,
-        g: 0,
-        b: 0,
-    });
+    for i in 0..26 {
+        write_ascii(pixel_writer, 50 + 8 * i, 50, (b'A' + i as u8) as char, &PixelColor {
+            r: 0,
+            g: 0,
+            b: 0,
+        });
+    }
+    // write_ascii(pixel_writer, 50, 50, 'O', &PixelColor {
+    //     r: 0,
+    //     g: 0,
+    //     b: 0,
+    // });
+    // write_ascii(pixel_writer, 58, 50, 'K', &PixelColor {
+    //     r: 0,
+    //     g: 0,
+    //     b: 0,
+    // });
 
     loop {
         unsafe { asm!("hlt"); }

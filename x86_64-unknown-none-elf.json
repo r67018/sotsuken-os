@@ -15,6 +15,12 @@
   "features": "-mmx,-sse,-sse2,-sse3,-ssse3,-sse4.1,-sse4.2,-avx,-avx2,+soft-float",
   "linker-flavor": "ld.lld",
   "linker": "/usr/local/clang+llvm-7.1.0-x86_64-linux-gnu-ubuntu-14.04/bin/ld.lld",
+  "pre-link-args": {
+    "ld.lld": [
+      "--format=default",
+      "./hankaku.o"
+    ]
+  },
   "post-link-args": {
     "ld.lld": [
       "--entry", "KernelMain",

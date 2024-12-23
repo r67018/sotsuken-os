@@ -2,9 +2,14 @@
 #![no_main]
 #![allow(non_upper_case_globals)]
 
+mod graphics;
+mod font;
+
 use core::arch::asm;
 use core::panic::PanicInfo;
 use kernel::{FrameBufferConfig, PixelFormat_kPixelBGRResv8BitPerColor, PixelFormat_kPixelRGBResv8BitPerColor};
+use crate::font::write_ascii;
+use crate::graphics::{BGRResv8BitPerColorPixelWriter, PixelColor, PixelWriter, RGBResv8BitPerColorPixelWriter};
 
 #[no_mangle]
 pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {
@@ -61,86 +66,5 @@ pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {
 fn panic(_info: &PanicInfo) -> ! {
     loop {
         unsafe { asm!("hlt"); }
-    }
-}
-
-struct PixelColor {
-    r: u8,
-    g: u8,
-    b: u8,
-}
-
-fn pixel_at(x: u32, y: u32, config: &FrameBufferConfig) -> *mut u8 {
-    unsafe {
-        config.frame_buffer.offset(4 * (config.pixels_per_scan_line * y + x) as isize)
-    }
-}
-
-trait PixelWriter {
-    fn write(&self, x: u32, y: u32, c: &PixelColor);
-}
-
-struct RGBResv8BitPerColorPixelWriter<'a> {
-    pub config: &'a FrameBufferConfig,
-}
-
-impl PixelWriter for RGBResv8BitPerColorPixelWriter<'_> {
-    fn write(&self, x: u32, y: u32, c: &PixelColor) {
-        let p = pixel_at(x, y, self.config);
-        unsafe {
-            *p.offset(0) = c.r;
-            *p.offset(1) = c.g;
-            *p.offset(2) = c.b;
-        }
-    }
-}
-
-struct BGRResv8BitPerColorPixelWriter<'a> {
-    pub config: &'a FrameBufferConfig,
-}
-
-impl PixelWriter for BGRResv8BitPerColorPixelWriter<'_> {
-    fn write(&self, x: u32, y: u32, c: &PixelColor) {
-        let p = pixel_at(x, y, self.config);
-        unsafe {
-            *p.offset(0) = c.b;
-            *p.offset(1) = c.g;
-            *p.offset(2) = c.r;
-        }
-    }
-}
-
-const FONT_A: [u8; 16] = [
-    0b00000000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00100100,
-    0b00100100,
-    0b00100100,
-    0b00100100,
-    0b01111110,
-    0b01000010,
-    0b01000010,
-    0b01000010,
-    0b11100111,
-    0b00000000,
-    0b00000000,
-];
-
-fn write_ascii<T>(writer: &T, x: u32, y: u32, c: char, color: &PixelColor)
-    where T: PixelWriter + ?Sized,
-{
-    if c != 'A' {
-        return;
-    }
-    for dy in 0..16u32 {
-        for dx in 0..8u32 {
-            let is_set = (FONT_A[dy as usize] << dx) & 0x80;
-            if is_set == 0x80 {
-                writer.write(x + dx, y + dy, color);
-            }
-        }
     }
 }

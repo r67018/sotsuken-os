@@ -40,6 +40,18 @@ pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {
             });
         }
     }
+
+    write_ascii(pixel_writer, 50, 50, 'A', &PixelColor {
+        r: 0,
+        g: 0,
+        b: 0,
+    });
+    write_ascii(pixel_writer, 58, 50, 'A', &PixelColor {
+        r: 0,
+        g: 0,
+        b: 0,
+    });
+
     loop {
         unsafe { asm!("hlt"); }
     }
@@ -94,6 +106,41 @@ impl PixelWriter for BGRResv8BitPerColorPixelWriter<'_> {
             *p.offset(0) = c.b;
             *p.offset(1) = c.g;
             *p.offset(2) = c.r;
+        }
+    }
+}
+
+const FONT_A: [u8; 16] = [
+    0b00000000,
+    0b00011000,
+    0b00011000,
+    0b00011000,
+    0b00011000,
+    0b00100100,
+    0b00100100,
+    0b00100100,
+    0b00100100,
+    0b01111110,
+    0b01000010,
+    0b01000010,
+    0b01000010,
+    0b11100111,
+    0b00000000,
+    0b00000000,
+];
+
+fn write_ascii<T>(writer: &T, x: u32, y: u32, c: char, color: &PixelColor)
+    where T: PixelWriter + ?Sized,
+{
+    if c != 'A' {
+        return;
+    }
+    for dy in 0..16u32 {
+        for dx in 0..8u32 {
+            let is_set = (FONT_A[dy as usize] << dx) & 0x80;
+            if is_set == 0x80 {
+                writer.write(x + dx, y + dy, color);
+            }
         }
     }
 }

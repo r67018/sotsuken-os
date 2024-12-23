@@ -53,16 +53,6 @@ pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {
             b: 0,
         });
     }
-    // write_ascii(pixel_writer, 50, 50, 'O', &PixelColor {
-    //     r: 0,
-    //     g: 0,
-    //     b: 0,
-    // });
-    // write_ascii(pixel_writer, 58, 50, 'K', &PixelColor {
-    //     r: 0,
-    //     g: 0,
-    //     b: 0,
-    // });
 
     loop {
         unsafe { asm!("hlt"); }

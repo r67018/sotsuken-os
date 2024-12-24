@@ -8,7 +8,7 @@ mod font;
 use core::arch::asm;
 use core::panic::PanicInfo;
 use kernel::{FrameBufferConfig, PixelFormat_kPixelBGRResv8BitPerColor, PixelFormat_kPixelRGBResv8BitPerColor};
-use crate::font::write_ascii;
+use crate::font::{write_ascii, write_string};
 use crate::graphics::{BGRResv8BitPerColorPixelWriter, PixelColor, PixelWriter, RGBResv8BitPerColorPixelWriter};
 
 #[no_mangle]
@@ -46,13 +46,18 @@ pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {
         }
     }
 
-    for i in 0..26 {
-        write_ascii(pixel_writer, 50 + 8 * i, 50, (b'A' + i as u8) as char, &PixelColor {
+    for (i, c) in ('!'..='~').enumerate() {
+        write_ascii(pixel_writer, 8 * i as u32, 50, c, &PixelColor {
             r: 0,
             g: 0,
             b: 0,
-        });
+        })
     }
+    write_string(pixel_writer, 0, 66, "Hello, world!", &PixelColor {
+        r: 0,
+        g: 0,
+        b: 0,
+    });
 
     loop {
         unsafe { asm!("hlt"); }

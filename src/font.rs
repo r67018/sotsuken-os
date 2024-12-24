@@ -35,3 +35,11 @@ pub fn write_ascii<T>(writer: &T, x: u32, y: u32, c: char, color: &PixelColor)
         }
     }
 }
+
+pub fn write_string<T>(writer: &T, x: u32, y: u32, s: &str, color: &PixelColor)
+    where T: PixelWriter + ?Sized,
+{
+    for  (i, c) in s.chars().enumerate() {
+        write_ascii(writer, x + 8 * i as u32, y, c, color);
+    }
+}

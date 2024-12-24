@@ -18,12 +18,12 @@ pub fn get_font(c: char) -> Option<*const u8> {
     }
 }
 
-pub fn write_ascii<T>(writer: &T, x: u32, y: u32, c: char, color: &PixelColor)
+pub fn write_ascii<T>(writer: &T, x: usize, y: usize, c: char, color: &PixelColor)
     where T: PixelWriter + ?Sized,
 {
     // フォントが存在するなら描画
     if let Some(font) = get_font(c) {
-        for dy in 0..16u32 {
+        for dy in 0..16 {
             for dx in 0..8 {
                 unsafe {
                     let is_set = (*font.offset(dy as isize) << dx) & 0x80;
@@ -36,10 +36,10 @@ pub fn write_ascii<T>(writer: &T, x: u32, y: u32, c: char, color: &PixelColor)
     }
 }
 
-pub fn write_string<T>(writer: &T, x: u32, y: u32, s: &str, color: &PixelColor)
+pub fn write_string<T>(writer: &T, x: usize, y: usize, s: &str, color: &PixelColor)
     where T: PixelWriter + ?Sized,
 {
     for  (i, c) in s.chars().enumerate() {
-        write_ascii(writer, x + 8 * i as u32, y, c, color);
+        write_ascii(writer, x + 8 * i, y, c, color);
     }
 }

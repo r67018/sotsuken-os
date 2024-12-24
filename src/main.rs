@@ -29,7 +29,7 @@ pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {
 
     for x in 0..frame_buffer_config.horizontal_resolution {
         for y in 0..frame_buffer_config.vertical_resolution {
-            pixel_writer.write(x, y, &PixelColor {
+            pixel_writer.write(x as usize, y as usize, &PixelColor {
                 r: 255,
                 g: 255,
                 b: 255,
@@ -47,7 +47,7 @@ pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {
     }
 
     for (i, c) in ('!'..='~').enumerate() {
-        write_ascii(pixel_writer, 8 * i as u32, 50, c, &PixelColor {
+        write_ascii(pixel_writer, 8 * i, 50, c, &PixelColor {
             r: 0,
             g: 0,
             b: 0,

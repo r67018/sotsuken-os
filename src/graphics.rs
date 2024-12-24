@@ -6,14 +6,14 @@ pub struct PixelColor {
     pub b: u8,
 }
 
-fn pixel_at(x: u32, y: u32, config: &FrameBufferConfig) -> *mut u8 {
+fn pixel_at(x: usize, y: usize, config: &FrameBufferConfig) -> *mut u8 {
     unsafe {
-        config.frame_buffer.offset(4 * (config.pixels_per_scan_line * y + x) as isize)
+        config.frame_buffer.offset(4 * (config.pixels_per_scan_line * (y as u32) + (x as u32)) as isize)
     }
 }
 
 pub trait PixelWriter {
-    fn write(&self, x: u32, y: u32, c: &PixelColor);
+    fn write(&self, x: usize, y: usize, c: &PixelColor);
 }
 
 pub struct RGBResv8BitPerColorPixelWriter<'a> {
@@ -21,7 +21,7 @@ pub struct RGBResv8BitPerColorPixelWriter<'a> {
 }
 
 impl PixelWriter for RGBResv8BitPerColorPixelWriter<'_> {
-    fn write(&self, x: u32, y: u32, c: &PixelColor) {
+    fn write(&self, x: usize, y: usize, c: &PixelColor) {
         let p = pixel_at(x, y, self.config);
         unsafe {
             *p.offset(0) = c.r;
@@ -36,7 +36,7 @@ pub struct BGRResv8BitPerColorPixelWriter<'a> {
 }
 
 impl PixelWriter for BGRResv8BitPerColorPixelWriter<'_> {
-    fn write(&self, x: u32, y: u32, c: &PixelColor) {
+    fn write(&self, x: usize, y: usize, c: &PixelColor) {
         let p = pixel_at(x, y, self.config);
         unsafe {
             *p.offset(0) = c.b;

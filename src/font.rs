@@ -36,10 +36,11 @@ pub fn write_ascii<T>(writer: &T, x: usize, y: usize, c: char, color: &PixelColo
     }
 }
 
-pub fn write_string<T>(writer: &T, x: usize, y: usize, s: &str, color: &PixelColor)
+pub fn write_string<T, S>(writer: &T, x: usize, y: usize, s: &S, color: &PixelColor)
     where T: PixelWriter + ?Sized,
+          for<'a> &'a S: IntoIterator<Item = &'a char>,
 {
-    for  (i, c) in s.chars().enumerate() {
-        write_ascii(writer, x + 8 * i, y, c, color);
+    for  (i, c) in s.into_iter().enumerate() {
+        write_ascii(writer, x + 8 * i, y, *c, color);
     }
 }

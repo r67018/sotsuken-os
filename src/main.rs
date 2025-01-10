@@ -4,11 +4,12 @@
 
 mod graphics;
 mod font;
+mod console;
 
 use core::arch::asm;
 use core::panic::PanicInfo;
 use kernel::{FrameBufferConfig, PixelFormat_kPixelBGRResv8BitPerColor, PixelFormat_kPixelRGBResv8BitPerColor};
-use crate::font::{write_ascii, write_string};
+use crate::console::Console;
 use crate::graphics::{BGRResv8BitPerColorPixelWriter, PixelColor, PixelWriter, RGBResv8BitPerColorPixelWriter};
 
 #[no_mangle]
@@ -36,28 +37,46 @@ pub extern "C" fn KernelMain(frame_buffer_config: &mut FrameBufferConfig) -> ! {
             });
         }
     }
-    for x in 0..200 {
-        for y in 0..100 {
-            pixel_writer    .write(x, y, &PixelColor {
-                r: 0,
-                g: 255,
-                b: 0,
-            });
-        }
-    }
 
-    for (i, c) in ('!'..='~').enumerate() {
-        write_ascii(pixel_writer, 8 * i, 50, c, &PixelColor {
+    let mut console = Console::new(
+        pixel_writer,
+        PixelColor {
             r: 0,
             g: 0,
             b: 0,
-        })
-    }
-    write_string(pixel_writer, 0, 66, "Hello, world!", &PixelColor {
-        r: 0,
-        g: 0,
-        b: 0,
-    });
+        },
+        PixelColor {
+            r: 255,
+            g: 255,
+            b: 255,
+        }
+    );
+    console.put_string("Line 1\n");
+    console.put_string("Line 2\n");
+    console.put_string("Line 3\n");
+    console.put_string("Line 4\n");
+    console.put_string("Line 5\n");
+    console.put_string("Line 6\n");
+    console.put_string("Line 7\n");
+    console.put_string("Line 8\n");
+    console.put_string("Line 9\n");
+    console.put_string("Line 10\n");
+    console.put_string("Line 11\n");
+    console.put_string("Line 12\n");
+    console.put_string("Line 13\n");
+    console.put_string("Line 14\n");
+    console.put_string("Line 15\n");
+    console.put_string("Line 16\n");
+    console.put_string("Line 17\n");
+    console.put_string("Line 18\n");
+    console.put_string("Line 19\n");
+    console.put_string("Line 20\n");
+    console.put_string("Line 21\n");
+    console.put_string("Line 22\n");
+    console.put_string("Line 23\n");
+    console.put_string("Line 24\n");
+    console.put_string("Line 25\n");
+    console.put_string("Line 26\n");
 
     loop {
         unsafe { asm!("hlt"); }

@@ -2,8 +2,6 @@ use core::mem::MaybeUninit;
 use core::ops::AddAssign;
 use kernel::FrameBufferConfig;
 
-pub static mut PIXEL_WRITER: MaybeUninit<&dyn PixelWriter> = MaybeUninit::uninit();
-
 #[derive(Clone, Copy, Debug)]
 pub struct Vector2D<T> {
     pub x: T,
@@ -88,5 +86,13 @@ impl PixelWriter for BGRResv8BitPerColorPixelWriter<'_> {
             *p.offset(1) = c.g;
             *p.offset(2) = c.r;
         }
+    }
+}
+
+pub static mut PIXEL_WRITER: MaybeUninit<&dyn PixelWriter> = MaybeUninit::uninit();
+
+pub fn pixel_writer() -> &'static dyn PixelWriter {
+    unsafe {
+        PIXEL_WRITER.assume_init()
     }
 }

@@ -1,8 +1,31 @@
 use core::mem::MaybeUninit;
+use core::ops::AddAssign;
 use kernel::FrameBufferConfig;
 
 pub static mut PIXEL_WRITER: MaybeUninit<&dyn PixelWriter> = MaybeUninit::uninit();
 
+#[derive(Clone, Copy, Debug)]
+pub struct Vector2D<T> {
+    pub x: T,
+    pub y: T,
+}
+
+impl<T> Vector2D<T> {
+    pub fn new(x: T, y: T) -> Self {
+        Self { x, y }
+    }
+}
+
+impl<T> AddAssign<Vector2D<T>> for Vector2D<T>
+    where T: AddAssign<T>
+{
+    fn add_assign(&mut self, rhs: Vector2D<T>) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct PixelColor {
     pub r: u8,
     pub g: u8,
@@ -16,8 +39,26 @@ fn pixel_at(x: usize, y: usize, config: &FrameBufferConfig) -> *mut u8 {
 }
 
 pub trait PixelWriter {
-    fn write(&self, x: usize, y: usize, c: &PixelColor);
     fn write_pixel(&self, x: usize, y: usize, c: &PixelColor);
+
+    fn fill_rectangle(&self, pos: Vector2D<usize>, size: Vector2D<usize>, c: &PixelColor) {
+        for dx in 0..size.x {
+            for dy in 0..size.y {
+                self.write_pixel(pos.x + dx, pos.y + dy, c);
+            }
+        }
+    }
+
+    fn draw_rectangle(&self, pos: Vector2D<usize>, size: Vector2D<usize>, c: &PixelColor) {
+        for dx in 0..size.x {
+            self.write_pixel(pos.x + dx, pos.y, c);
+            self.write_pixel(pos.x + dx, pos.y + size.y - 1, c);
+        }
+        for dy in 0..size.y {
+            self.write_pixel(pos.x, pos.y + dy, c);
+            self.write_pixel(pos.x + size.x - 1, pos.y + dy, c);
+        }
+    }
 }
 
 pub struct RGBResv8BitPerColorPixelWriter<'a> {

@@ -84,8 +84,8 @@ pub extern "C" fn KernelMain(frame_buffer_config: &'static mut FrameBufferConfig
 
     // マウスカーソルの描画
     for dy in 0..MOUSE_CURSOR_HEIGHT {
-        for dx in 0..MOUSE_CURSOR_WIDTH {
-            let c = MOUSE_CURSOR_SHAPE[dy].chars().nth(dx).unwrap();
+        let s = MOUSE_CURSOR_SHAPE[dy];
+        for (dx, c) in s.chars().enumerate() {
             if c == '@' {
                 pixel_writer().write_pixel(200 + dx, 100 + dy, PixelColor::new(0, 0, 0));
             } else if c == '.' {

@@ -18,7 +18,7 @@ pub fn get_font(c: char) -> Option<*const u8> {
     }
 }
 
-pub fn write_ascii<T>(writer: &T, x: usize, y: usize, c: char, color: &PixelColor)
+pub fn write_ascii<T>(writer: &T, x: usize, y: usize, c: char, color: PixelColor)
     where T: PixelWriter + ?Sized,
 {
     // フォントが存在するなら描画
@@ -36,7 +36,7 @@ pub fn write_ascii<T>(writer: &T, x: usize, y: usize, c: char, color: &PixelColo
     }
 }
 
-pub fn write_string<T, S>(writer: &T, x: usize, y: usize, s: &S, color: &PixelColor)
+pub fn write_string<T, S>(writer: &T, x: usize, y: usize, s: &S, color: PixelColor)
     where T: PixelWriter + ?Sized,
           for<'a> &'a S: IntoIterator<Item = &'a char>,
 {

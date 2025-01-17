@@ -37,9 +37,9 @@ fn pixel_at(x: usize, y: usize, config: &FrameBufferConfig) -> *mut u8 {
 }
 
 pub trait PixelWriter {
-    fn write_pixel(&self, x: usize, y: usize, c: &PixelColor);
+    fn write_pixel(&self, x: usize, y: usize, c: PixelColor);
 
-    fn fill_rectangle(&self, pos: Vector2D<usize>, size: Vector2D<usize>, c: &PixelColor) {
+    fn fill_rectangle(&self, pos: Vector2D<usize>, size: Vector2D<usize>, c: PixelColor) {
         for dx in 0..size.x {
             for dy in 0..size.y {
                 self.write_pixel(pos.x + dx, pos.y + dy, c);
@@ -47,7 +47,7 @@ pub trait PixelWriter {
         }
     }
 
-    fn draw_rectangle(&self, pos: Vector2D<usize>, size: Vector2D<usize>, c: &PixelColor) {
+    fn draw_rectangle(&self, pos: Vector2D<usize>, size: Vector2D<usize>, c: PixelColor) {
         for dx in 0..size.x {
             self.write_pixel(pos.x + dx, pos.y, c);
             self.write_pixel(pos.x + dx, pos.y + size.y - 1, c);
@@ -64,7 +64,7 @@ pub struct RGBResv8BitPerColorPixelWriter<'a> {
 }
 
 impl PixelWriter for RGBResv8BitPerColorPixelWriter<'_> {
-    fn write_pixel(&self, x: usize, y: usize, c: &PixelColor) {
+    fn write_pixel(&self, x: usize, y: usize, c: PixelColor) {
         let p = pixel_at(x, y, self.config);
         unsafe {
             *p.offset(0) = c.r;
@@ -79,7 +79,7 @@ pub struct BGRResv8BitPerColorPixelWriter<'a> {
 }
 
 impl PixelWriter for BGRResv8BitPerColorPixelWriter<'_> {
-    fn write_pixel(&self, x: usize, y: usize, c: &PixelColor) {
+    fn write_pixel(&self, x: usize, y: usize, c: PixelColor) {
         let p = pixel_at(x, y, self.config);
         unsafe {
             *p.offset(0) = c.b;

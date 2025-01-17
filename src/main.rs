@@ -81,18 +81,18 @@ pub extern "C" fn KernelMain(frame_buffer_config: &'static mut FrameBufferConfig
 
     let frame_width = frame_buffer_config.horizontal_resolution as usize;
     let frame_height = frame_buffer_config.vertical_resolution as usize;
-    pixel_writer().fill_rectangle(Vector2D::new(0, 0), Vector2D::new(frame_width, frame_height), &DESKTOP_BG_COLOR);
-    pixel_writer().fill_rectangle(Vector2D::new(0, frame_height - 50), Vector2D::new(frame_width, 50), &PixelColor {
+    pixel_writer().fill_rectangle(Vector2D::new(0, 0), Vector2D::new(frame_width, frame_height), DESKTOP_BG_COLOR);
+    pixel_writer().fill_rectangle(Vector2D::new(0, frame_height - 50), Vector2D::new(frame_width, 50), PixelColor {
         r: 1,
         g: 8,
         b: 17,
     });
-    pixel_writer().fill_rectangle(Vector2D::new(0, frame_height - 50), Vector2D::new(frame_width / 5, 50), &PixelColor {
+    pixel_writer().fill_rectangle(Vector2D::new(0, frame_height - 50), Vector2D::new(frame_width / 5, 50), PixelColor {
         r: 80,
         g: 80,
         b: 80,
     });
-    pixel_writer().draw_rectangle(Vector2D::new(10, frame_height - 40), Vector2D::new(30, 30), &PixelColor {
+    pixel_writer().draw_rectangle(Vector2D::new(10, frame_height - 40), Vector2D::new(30, 30), PixelColor {
         r: 160,
         g: 160,
         b: 160,
@@ -103,13 +103,13 @@ pub extern "C" fn KernelMain(frame_buffer_config: &'static mut FrameBufferConfig
         for dx in 0..MOUSE_CURSOR_WIDTH {
             let c = MOUSE_CURSOR_SHAPE[dy].chars().nth(dx).unwrap();
             if c == '@' {
-                pixel_writer().write_pixel(200 + dx, 100 + dy, &PixelColor {
+                pixel_writer().write_pixel(200 + dx, 100 + dy, PixelColor {
                     r: 0,
                     g: 0,
                     b: 0,
                 });
             } else if c == '.' {
-                pixel_writer().write_pixel(200 + dx, 100 + dy, &PixelColor {
+                pixel_writer().write_pixel(200 + dx, 100 + dy, PixelColor {
                     r: 255,
                     g: 255,
                     b: 255,

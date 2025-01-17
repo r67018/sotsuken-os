@@ -47,7 +47,7 @@ impl<'a, T> Console<'a, T>
                     8 * self.cursor_column,
                     16 * self.cursor_row,
                     c,
-                    &self.fg_color
+                    self.fg_color
                 );
                 self.buffer[self.cursor_row][self.cursor_column] = c;
                 self.cursor_column += 1;
@@ -70,13 +70,13 @@ impl<'a, T> Console<'a, T>
         // 画面を背景色で塗り潰す
         for y in 0..(16 * ROWS) {
             for x in 0..(8 * COLUMNS) {
-                self.writer.write_pixel(x, y, &self.bg_color);
+                self.writer.write_pixel(x, y, self.bg_color);
             }
         }
         // 各行を1つずらしながら描画する
         for row in 0..(ROWS - 1) {
             self.buffer.copy_within((row+1)..=(row+1), row);
-            write_string(self.writer, 0, 16 * row, &self.buffer[row], &self.fg_color)
+            write_string(self.writer, 0, 16 * row, &self.buffer[row], self.fg_color)
         }
         // 最終行をヌル文字で埋める
         self.buffer[ROWS - 1].fill('\0');

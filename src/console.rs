@@ -70,7 +70,7 @@ impl<'a, T> Console<'a, T>
         // 画面を背景色で塗り潰す
         for y in 0..(16 * ROWS) {
             for x in 0..(8 * COLUMNS) {
-                self.writer.write(x, y, &self.bg_color);
+                self.writer.write_pixel(x, y, &self.bg_color);
             }
         }
         // 各行を1つずらしながら描画する

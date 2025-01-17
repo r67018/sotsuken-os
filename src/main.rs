@@ -53,7 +53,7 @@ pub extern "C" fn KernelMain(frame_buffer_config: &'static mut FrameBufferConfig
     for x in 0..frame_buffer_config.horizontal_resolution {
         for y in 0..frame_buffer_config.vertical_resolution {
             unsafe {
-                PIXEL_WRITER.assume_init().write(x as usize, y as usize, &PixelColor {
+                PIXEL_WRITER.assume_init().write_pixel(x as usize, y as usize, &PixelColor {
                     r: 255,
                     g: 255,
                     b: 255,

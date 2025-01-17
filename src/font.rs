@@ -28,7 +28,7 @@ pub fn write_ascii<T>(writer: &T, x: usize, y: usize, c: char, color: &PixelColo
                 unsafe {
                     let is_set = (*font.offset(dy as isize) << dx) & 0x80;
                     if is_set == 0x80 {
-                        writer.write(x + dx, y + dy, color);
+                        writer.write_pixel(x + dx, y + dy, color);
                     }
                 }
             }

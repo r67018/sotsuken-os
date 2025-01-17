@@ -17,6 +17,7 @@ fn pixel_at(x: usize, y: usize, config: &FrameBufferConfig) -> *mut u8 {
 
 pub trait PixelWriter {
     fn write(&self, x: usize, y: usize, c: &PixelColor);
+    fn write_pixel(&self, x: usize, y: usize, c: &PixelColor);
 }
 
 pub struct RGBResv8BitPerColorPixelWriter<'a> {
@@ -24,7 +25,7 @@ pub struct RGBResv8BitPerColorPixelWriter<'a> {
 }
 
 impl PixelWriter for RGBResv8BitPerColorPixelWriter<'_> {
-    fn write(&self, x: usize, y: usize, c: &PixelColor) {
+    fn write_pixel(&self, x: usize, y: usize, c: &PixelColor) {
         let p = pixel_at(x, y, self.config);
         unsafe {
             *p.offset(0) = c.r;
@@ -39,7 +40,7 @@ pub struct BGRResv8BitPerColorPixelWriter<'a> {
 }
 
 impl PixelWriter for BGRResv8BitPerColorPixelWriter<'_> {
-    fn write(&self, x: usize, y: usize, c: &PixelColor) {
+    fn write_pixel(&self, x: usize, y: usize, c: &PixelColor) {
         let p = pixel_at(x, y, self.config);
         unsafe {
             *p.offset(0) = c.b;

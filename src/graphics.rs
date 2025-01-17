@@ -30,6 +30,12 @@ pub struct PixelColor {
     pub b: u8,
 }
 
+impl PixelColor {
+    pub fn new(r: u8, g: u8, b: u8) -> Self {
+        Self { r, g, b }
+    }
+}
+
 fn pixel_at(x: usize, y: usize, config: &FrameBufferConfig) -> *mut u8 {
     unsafe {
         config.frame_buffer.offset(4 * (config.pixels_per_scan_line * (y as u32) + (x as u32)) as isize)

@@ -1,4 +1,7 @@
+use core::mem::MaybeUninit;
 use kernel::FrameBufferConfig;
+
+pub static mut PIXEL_WRITER: MaybeUninit<&dyn PixelWriter> = MaybeUninit::uninit();
 
 pub struct PixelColor {
     pub r: u8,

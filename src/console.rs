@@ -1,5 +1,10 @@
 use crate::font::{write_ascii, write_string};
 use crate::graphics::{PixelColor, PixelWriter};
+use core::fmt;
+use core::fmt::Write;
+use core::mem::MaybeUninit;
+
+pub static mut CONSOLE: MaybeUninit<Console<dyn PixelWriter>> = MaybeUninit::uninit();
 
 // コンソールの行数
 const ROWS: usize = 25;
@@ -76,4 +81,24 @@ impl<'a, T> Console<'a, T>
         // 最終行をヌル文字で埋める
         self.buffer[ROWS - 1].fill('\0');
     }
+}
+
+impl<'a, T> fmt::Write for Console<'a, T>
+    where T: PixelWriter + ?Sized
+{
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        self.put_string(s);
+        Ok(())
+    }
+}
+
+pub fn _printk(args: fmt::Arguments) {
+    unsafe {
+        CONSOLE.assume_init_mut().write_fmt(args).unwrap();
+    }
+}
+
+#[macro_export]
+macro_rules! printk {
+    ($($arg:tt)*) => ($crate::console::_printk(format_args!($($arg)*)));
 }

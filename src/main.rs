@@ -119,7 +119,7 @@ pub extern "C" fn KernelMain(frame_buffer_config: &'static mut FrameBufferConfig
             let class_code = pci::read_class_code(dev.bus, dev.device, dev.function);
             printk!("{}.{}.{}: vend {:04x}, class {:08x}, head {:02x}\n",
                 dev.bus, dev.device, dev.function,
-                vendor_id, class_code.base | class_code.sub | class_code.interface, dev.header_type);
+                vendor_id, ((class_code.base as u32) << 16) | ((class_code.sub as u32) << 8) | (class_code.interface as u32), dev.header_type);
             i += 1;
         }
     }

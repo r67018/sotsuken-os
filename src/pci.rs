@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use thiserror::Error;
+use crate::printk;
 
 extern "C" {
     /// IOポート空間にデータを書き込む
@@ -195,12 +196,12 @@ impl PciBus {
     /// もしPCI-PCIブリッチなら、セカンダリバスに対しScanBusを実行する
     fn scan_function(&mut self, bus: u8, device: u8, function: u8) -> anyhow::Result<()> {
         let header_type = unsafe { read_header_type(bus, device, function) };
-        self.add_device(bus, device, function, header_type)?;
+        let class_code = unsafe { read_class_code(bus, device, function) };
+        self.add_device(bus, device, function, header_type, class_code)?;
 
-        let cc = unsafe { read_class_code(bus, device, function) };
         unsafe {
             // ファンクションがPCI-PCIブリッジの場合はセカンダリバスに繋がったデバイスをスキャン
-            if cc.match_base_sub(0x06, 0x04) {
+            if class_code.match_base_sub(0x06, 0x04) {
                 let bus_numbers = read_bus_numbers(bus, device, function);
                 let secondary_bus = (bus_numbers >> 8) as u8;
                 return self.scan_bus(secondary_bus);
@@ -211,7 +212,7 @@ impl PciBus {
     }
 
     // 発見したPCIデバイスをdevicesに追加する
-    fn add_device(&mut self, bus: u8, device: u8, function: u8, header_type: u8) -> anyhow::Result<()> {
+    fn add_device(&mut self, bus: u8, device: u8, function: u8, header_type: u8, class_code: ClassCode) -> anyhow::Result<()> {
         // devicesが満杯の場合はエラー
         if self.num_device == self.devices.len() {
             return Err(anyhow!(PciError::DeviceIsFull));
@@ -222,11 +223,7 @@ impl PciBus {
             device,
             function,
             header_type,
-            class_code: ClassCode {
-                base: 0,
-                sub: 0,
-                interface: 0,
-            }
+            class_code,
         };
         self.num_device += 1;
         Ok(())

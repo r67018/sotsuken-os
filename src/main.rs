@@ -2,15 +2,22 @@
 #![no_main]
 #![allow(non_upper_case_globals)]
 
+extern crate alloc;
+
 mod graphics;
 mod font;
 mod console;
+mod pci;
 
 use core::arch::asm;
 use core::panic::PanicInfo;
 use kernel::{FrameBufferConfig, PixelFormat_kPixelBGRResv8BitPerColor, PixelFormat_kPixelRGBResv8BitPerColor};
 use crate::console::{Console, CONSOLE};
 use crate::graphics::{pixel_writer, BGRResv8BitPerColorPixelWriter, PixelColor, RGBResv8BitPerColorPixelWriter, Vector2D, PIXEL_WRITER};
+
+/// ヒープ管理用のアロケータ
+#[global_allocator]
+static ALLOCATOR: linked_list_allocator::LockedHeap = linked_list_allocator::LockedHeap::empty();
 
 const MOUSE_CURSOR_WIDTH: usize = 15;
 const MOUSE_CURSOR_HEIGHT: usize = 24;
@@ -48,6 +55,9 @@ const DESKTOP_BG_COLOR: PixelColor = PixelColor {
 
 #[no_mangle]
 pub extern "C" fn KernelMain(frame_buffer_config: &'static mut FrameBufferConfig) -> ! {
+    // ヒープを初期化
+    init_heap();
+
     static mut RGB_PIXEL_WRITER: Option<RGBResv8BitPerColorPixelWriter> = None;
     static mut BGR_PIXEL_WRITER: Option<BGRResv8BitPerColorPixelWriter> = None;
 
@@ -94,10 +104,38 @@ pub extern "C" fn KernelMain(frame_buffer_config: &'static mut FrameBufferConfig
         }
     }
 
-    printk!("Welcome to GotOS!");
+    printk!("Welcome to GotOS!\n");
+
+    let mut pci = pci::PciBus::new();
+    if let Err(err) = pci.scan_all_bus() {
+        printk!("{}", err);
+    }
+
+    let mut i = 0;
+    while i < pci.num_device {
+        unsafe {
+            let dev = pci.devices()[i];
+            let vendor_id = pci::read_vendor_id(dev.bus, dev.device, dev.function);
+            let class_code = pci::read_class_code(dev.bus, dev.device, dev.function);
+            printk!("{}.{}.{}: vend {:04x}, class {:08x}, head {:02x}\n",
+                dev.bus, dev.device, dev.function,
+                vendor_id, class_code.base | class_code.sub | class_code.interface, dev.header_type);
+            i += 1;
+        }
+    }
 
     loop {
         unsafe { asm!("hlt"); }
+    }
+}
+
+fn init_heap() {
+    // 一旦適当に領域を割り当てる
+    let heap_start = 0x0100_0000;
+    let heap_end = 0x0200_0000;
+    let heap_size = heap_end - heap_start;
+    unsafe {
+        ALLOCATOR.lock().init(heap_start as *mut u8, heap_size);
     }
 }
 

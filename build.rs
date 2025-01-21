@@ -34,4 +34,32 @@ fn main() {
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings");
+
+    // アセンブリで書かれたコードをリンク
+    link_asmfunc(&out_path);
+}
+
+fn link_asmfunc(out_dir: &PathBuf) {
+    // amsfuncをコンパイル
+    println!("cargo:rerun-if-changed=src/asmfunc.asm");
+    let asmfunc_obj = out_dir.join("asmfunc.o");
+    let status = Command::new("nasm")
+        .args(["-f", "elf64", "-o", asmfunc_obj.to_str().unwrap(), "src/asmfunc.asm"])
+        .status()
+        .expect("Failed to execute nasm to generate asmfunc.o");
+    if !status.success() {
+        panic!("Failed to generate asmfunc.o")
+    }
+    // 静的ライブラリを生成
+    let asmfunc_lib = out_dir.join("libasmfunc.a");
+    let status = Command::new("ar")
+        .args(["crus", asmfunc_lib.to_str().unwrap(), asmfunc_obj.to_str().unwrap()])
+        .status()
+        .expect("Failed to execute ar to generate asmfunc static library");
+    if !status.success() {
+        panic!("Failed to generate libasmfunc.a")
+    }
+    // リンク設定
+    println!("cargo:rustc-link-search={}", out_dir.display());
+    println!("cargo:rustc-link-lib=static=asmfunc");
 }

@@ -14,6 +14,7 @@ use core::panic::PanicInfo;
 use kernel::{FrameBufferConfig, PixelFormat_kPixelBGRResv8BitPerColor, PixelFormat_kPixelRGBResv8BitPerColor};
 use crate::console::{Console, CONSOLE};
 use crate::graphics::{pixel_writer, BGRResv8BitPerColorPixelWriter, PixelColor, RGBResv8BitPerColorPixelWriter, Vector2D, PIXEL_WRITER};
+use crate::pci::Device;
 
 /// ヒープ管理用のアロケータ
 #[global_allocator]
@@ -82,22 +83,33 @@ pub extern "C" fn KernelMain(frame_buffer_config: &'static mut FrameBufferConfig
 
     printk!("Welcome to GotOS!\n");
 
+    // PCIデバイスをスキャン
     let mut pci = pci::PciBus::new();
     if let Err(err) = pci.scan_all_bus() {
         printk!("{}", err);
     }
 
-    let mut i = 0;
-    while i < pci.num_device {
-        unsafe {
-            let dev = pci.devices()[i];
+    // Intel製を優先してxHC(USB3.0用のコントローラ)を探す
+    let mut xhc_dev: Option<&Device> = None;
+    for i in 0..pci.num_device {
+        let dev = &pci.devices()[i];
+        // ベースクラス 0x0c: シリアルバスのコントローラ全体
+        // サブクラス 0x03： USBコントローラ
+        // インターフェース 0x30: xHCI
+        if dev.class_code.match_base_sub_interface(0x0c, 0x03, 0x30) {
+            xhc_dev = Some(dev);
+
+            // ベンダIDがインテル社のIDなら終了
             let vendor_id = pci::read_vendor_id(dev.bus, dev.device, dev.function);
-            let class_code = pci::read_class_code(dev.bus, dev.device, dev.function);
-            printk!("{}.{}.{}: vend {:04x}, class {:08x}, head {:02x}\n",
-                dev.bus, dev.device, dev.function,
-                vendor_id, ((class_code.base as u32) << 16) | ((class_code.sub as u32) << 8) | (class_code.interface as u32), dev.header_type);
-            i += 1;
+            if vendor_id == 0x8086 {
+                break;
+            }
         }
+    }
+    if let Some(xhc_dev) = xhc_dev {
+        printk!("xHC has been found: {}.{}.{}\n", xhc_dev.bus, xhc_dev.device, xhc_dev.function);
+    } else {
+        printk!("xHC has not found\n");
     }
 
     loop {

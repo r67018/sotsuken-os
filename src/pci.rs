@@ -102,6 +102,45 @@ unsafe fn read_bus_numbers(bus: u8, device: u8, function: u8) -> u32 {
     read_data()
 }
 
+fn read_conf_reg(device: &Device, reg_addr: u8) -> u32 {
+    unsafe {
+        write_address(make_address(device.bus, device.device, device.function, reg_addr));
+        read_data()
+    }
+}
+
+/// BAR(Base Address Register)へのアドレスを取得  
+/// BAR0からBAR5まであるため、取得したいBARをインデックスで指定する  
+/// BARはレジスタだが、MMIO(メモリ空間にマッピングされたIO)なので、アドレス先を読み取ることで取得できる
+pub fn read_bar(device: &Device, bar_index: usize) -> anyhow::Result<u64> {
+    // アドレスを計算
+    fn calc_bar_address(bar_index: usize) -> u8 {
+        0x10 + 4 * bar_index as u8
+    }
+
+    if bar_index < 0 || 6 <= bar_index {
+        return Err(anyhow!(PciError::IndexOutOfRange { min: 0, max: 5, actual: bar_index }));
+    }
+
+    let addr = calc_bar_address(bar_index);
+    let bar = read_conf_reg(device, addr) as u64;
+
+    // 32ビットアドレスの場合はそのまま返す
+    if (bar & 4) == 0 {
+        return Ok(bar);
+    }
+
+    // 64ビットアドレスの場合、連続した2つのBARを使う
+    // 64ビットアドレスで、かつBARのインデックスが5以上ならエラー
+    if bar_index >= 5 {
+        return Err(anyhow!(PciError::IndexOutOfRange { min: 0, max: 4, actual: bar_index }));
+    }
+
+    // 上位32ビットも取得する
+    let bar_upper = read_conf_reg(device, addr + 4) as u64;
+    Ok(bar_upper << 32 | bar)
+}
+
 fn is_single_function_device(header_type: u8) -> bool {
     (header_type & 0x80) == 0
 }
@@ -234,5 +273,7 @@ impl PciBus {
 #[derive(Error, Debug)]
 pub enum PciError {
     #[error("Cannot add a PCI device any more since device array is already full.")]
-    DeviceIsFull
+    DeviceIsFull,
+    #[error("Index out of range (min: {min}, max: {max}, actual: {actual})")]
+    IndexOutOfRange { min: usize, max: usize, actual: usize },
 }

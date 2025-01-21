@@ -58,32 +58,8 @@ pub extern "C" fn KernelMain(frame_buffer_config: &'static mut FrameBufferConfig
     // ヒープを初期化
     init_heap();
 
-    static mut RGB_PIXEL_WRITER: Option<RGBResv8BitPerColorPixelWriter> = None;
-    static mut BGR_PIXEL_WRITER: Option<BGRResv8BitPerColorPixelWriter> = None;
-
     // グローバル変数を初期化
-    // PixelFormatによってPixelWriterを切り替える
-    // 配置newのやり方がわからないので、両方インスタンス化してそれを参照する
-    unsafe {
-        RGB_PIXEL_WRITER = Some(RGBResv8BitPerColorPixelWriter {
-            config: frame_buffer_config,
-        });
-        BGR_PIXEL_WRITER = Some(BGRResv8BitPerColorPixelWriter {
-            config: frame_buffer_config,
-        });
-
-        PIXEL_WRITER.write(match frame_buffer_config.pixel_format {
-            PixelFormat_kPixelRGBResv8BitPerColor => RGB_PIXEL_WRITER.as_ref().unwrap(),
-            PixelFormat_kPixelBGRResv8BitPerColor => BGR_PIXEL_WRITER.as_ref().unwrap(),
-            _ => panic!("unsupported pixel format: {}", frame_buffer_config.pixel_format),
-        });
-
-        CONSOLE.write(Console::new(
-            pixel_writer(),
-            PixelColor::new(255, 255, 255),
-            DESKTOP_BG_COLOR,
-        ));
-    }
+    init_global_variables(frame_buffer_config);
 
     let frame_width = frame_buffer_config.horizontal_resolution as usize;
     let frame_height = frame_buffer_config.vertical_resolution as usize;
@@ -136,6 +112,34 @@ fn init_heap() {
     let heap_size = heap_end - heap_start;
     unsafe {
         ALLOCATOR.lock().init(heap_start as *mut u8, heap_size);
+    }
+}
+
+fn init_global_variables(frame_buffer_config: &'static FrameBufferConfig) {
+    static mut RGB_PIXEL_WRITER: Option<RGBResv8BitPerColorPixelWriter> = None;
+    static mut BGR_PIXEL_WRITER: Option<BGRResv8BitPerColorPixelWriter> = None;
+
+    // PixelFormatによってPixelWriterを切り替える
+    // 配置newのやり方がわからないので、両方インスタンス化してそれを参照する
+    unsafe {
+        RGB_PIXEL_WRITER = Some(RGBResv8BitPerColorPixelWriter {
+            config: frame_buffer_config,
+        });
+        BGR_PIXEL_WRITER = Some(BGRResv8BitPerColorPixelWriter {
+            config: frame_buffer_config,
+        });
+
+        PIXEL_WRITER.write(match frame_buffer_config.pixel_format {
+            PixelFormat_kPixelRGBResv8BitPerColor => RGB_PIXEL_WRITER.as_ref().unwrap(),
+            PixelFormat_kPixelBGRResv8BitPerColor => BGR_PIXEL_WRITER.as_ref().unwrap(),
+            _ => panic!("unsupported pixel format: {}", frame_buffer_config.pixel_format),
+        });
+
+        CONSOLE.write(Console::new(
+            pixel_writer(),
+            PixelColor::new(255, 255, 255),
+            DESKTOP_BG_COLOR,
+        ));
     }
 }
 

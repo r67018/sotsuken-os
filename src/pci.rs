@@ -1,6 +1,5 @@
 use anyhow::anyhow;
 use thiserror::Error;
-use crate::printk;
 
 extern "C" {
     /// IOポート空間にデータを書き込む
@@ -76,9 +75,11 @@ unsafe fn read_data() -> u32 {
     IoIn32(CONFIG_DATA)
 }
 
-pub unsafe fn read_vendor_id(bus: u8, device: u8, function: u8) -> u16 {
-    write_address(make_address(bus, device, function, 0x00));
-    (read_data() & 0xffff) as u16
+pub fn read_vendor_id(bus: u8, device: u8, function: u8) -> u16 {
+    unsafe {
+        write_address(make_address(bus, device, function, 0x00));
+        (read_data() & 0xffff) as u16
+    }
 }
 
 unsafe fn read_header_type(bus: u8, device: u8, function: u8) -> u8 {
@@ -147,7 +148,7 @@ impl PciBus {
 
         // 単機能デバイスじゃないなら、ホストブリッジが複数あるので、各バスを探索する
         for function in 1..8 {
-            let vendor_id = unsafe { read_vendor_id(0, 0, function) };
+            let vendor_id = read_vendor_id(0, 0, function);
             if is_invalid_vendor_id(vendor_id) {
                 continue;
             }
@@ -160,7 +161,7 @@ impl PciBus {
     /// 指定のバス番号の各デバイスをスキャンする
     fn scan_bus(&mut self, bus: u8) -> anyhow::Result<()> {
         for device in 0..32 {
-            let vendor_id = unsafe { read_vendor_id(bus, device, 0) };
+            let vendor_id = read_vendor_id(bus, device, 0);
             // ベンダIDが無効な場合はスキップ
             if is_invalid_vendor_id(vendor_id) {
                 continue;
@@ -181,7 +182,7 @@ impl PciBus {
 
         // 各ファンクションをスキャンする
         for function in 1..8 {
-            let vendor_id = unsafe { read_vendor_id(bus, device, function) };
+            let vendor_id = read_vendor_id(bus, device, function);
             // ベンダIDが無効な場合はスキップ
             if is_invalid_vendor_id(vendor_id) {
                 continue;

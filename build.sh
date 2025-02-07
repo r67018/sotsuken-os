@@ -3,6 +3,7 @@
 EDK2_DIR=~/edk2
 
 # カーネルをコンパイル
+source ~/osbook/devenv/buildenv.sh
 CARGO_LOG=$(cargo build --color always 2>&1)
 CARGO_STATUS=$?
 # ログを記録

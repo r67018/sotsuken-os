@@ -108,6 +108,11 @@ pub extern "C" fn KernelMain(frame_buffer_config: &'static mut FrameBufferConfig
     }
     if let Some(xhc_dev) = xhc_dev {
         printk!("xHC has been found: {}.{}.{}\n", xhc_dev.bus, xhc_dev.device, xhc_dev.function);
+
+        // BAR0レジスタの読み取り
+        let xhc_bar = pci::read_bar(xhc_dev, 0).expect("Failed to fetch BAR0 register.");
+        let xhc_mmio_base = xhc_bar & !0xf; // 下位4ビットはBARのフラグなのでマスクする
+        printk!("xHC mmio_base = {:08x}\n", xhc_mmio_base);
     } else {
         printk!("xHC has not found\n");
     }

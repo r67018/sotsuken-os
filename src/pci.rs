@@ -102,10 +102,17 @@ unsafe fn read_bus_numbers(bus: u8, device: u8, function: u8) -> u32 {
     read_data()
 }
 
-fn read_conf_reg(device: &Device, reg_addr: u8) -> u32 {
+pub fn read_conf_reg(device: &Device, reg_addr: u8) -> u32 {
     unsafe {
         write_address(make_address(device.bus, device.device, device.function, reg_addr));
         read_data()
+    }
+}
+
+pub fn write_conf_reg(dev: &Device, reg_addr: u8, value: u32) {
+    unsafe {
+        write_address(make_address(dev.bus, dev.device, dev.function, reg_addr));
+        write_data(value);
     }
 }
 

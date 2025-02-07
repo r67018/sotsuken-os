@@ -8,12 +8,15 @@ mod graphics;
 mod font;
 mod console;
 mod pci;
+mod usb;
+mod mouse;
 
 use core::arch::asm;
 use core::panic::PanicInfo;
 use kernel::{FrameBufferConfig, PixelFormat_kPixelBGRResv8BitPerColor, PixelFormat_kPixelRGBResv8BitPerColor};
 use crate::console::{Console, CONSOLE};
 use crate::graphics::{pixel_writer, BGRResv8BitPerColorPixelWriter, PixelColor, RGBResv8BitPerColorPixelWriter, Vector2D, PIXEL_WRITER};
+use crate::mouse::{mouse_cursor, MouseCursor, MOUSE_CURSOR};
 use crate::pci::Device;
 
 /// ヒープ管理用のアロケータ
@@ -113,6 +116,18 @@ pub extern "C" fn KernelMain(frame_buffer_config: &'static mut FrameBufferConfig
         let xhc_bar = pci::read_bar(xhc_dev, 0).expect("Failed to fetch BAR0 register.");
         let xhc_mmio_base = xhc_bar & !0xf; // 下位4ビットはBARのフラグなのでマスクする
         printk!("xHC mmio_base = {:08x}\n", xhc_mmio_base);
+        
+        let xhc = usb::xhci::Controller::new(xhc_mmio_base);
+        if pci::read_vendor_id(xhc_dev.bus, xhc_dev.device, xhc_dev.function) == 0x8086 {
+            usb::xhci::switch_ehci2xhci(&pci, &xhc_dev);
+        }
+        xhc.initialize();
+        printk!("xHC starting...\n");
+        xhc.run();
+        
+        xhc.configure_ports();
+        printk!("xHC ports configured\n");
+        xhc.process_event();
     } else {
         printk!("xHC has not found\n");
     }
@@ -157,6 +172,13 @@ fn init_global_variables(frame_buffer_config: &'static FrameBufferConfig) {
             PixelColor::new(255, 255, 255),
             DESKTOP_BG_COLOR,
         ));
+        
+        MOUSE_CURSOR.write(MouseCursor::new(
+            pixel_writer(),
+            DESKTOP_BG_COLOR,
+            Vector2D::new(300, 200),
+        ));
+        usb::xhci::set_mouse_observer(mouse::mouse_observer);
     }
 }
 
